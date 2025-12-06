@@ -106,3 +106,75 @@
   border: 1px solid #d0d0d0;
   color: #333;
 }
+
+.sarcasm-panel {
+  flex: 1;
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.input-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.input-section label {
+  font-size: 14px;
+  color: #333;
+}
+
+.sarcasm-textarea {
+  width: 95%;
+  height: 120px;
+  resize: none;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.sarcasm-textarea:focus {
+  outline: none;
+  border-color: #4a90e2;
+  box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+}
+
+.analyze-btn {
+  padding: 12px;
+  background: #4a90e2;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 15px;
+  transition: background 0.2s ease;
+}
+
+.analyze-btn:hover {
+  background: #3a78c2;
+}
+.results-section {
+  background: #f5f7fa;
+  padding: 12px;
+  border-radius: 10px;
+}
+
+.result-label {
+  font-size: 14px;
+  color: #555;
+}
+
+.result-value {
+  font-size: 24px;
+  font-weight: bold;
+  margin-top: 4px;
+  color: #222;
+}
+
