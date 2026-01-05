@@ -2,100 +2,152 @@ import { useEffect, useRef, useState } from "react";
 
 function EmotionPanel() {
   const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+  const rafRef = useRef(null);
 
   const [isCameraOn, setIsCameraOn] = useState(false);
   const [error, setError] = useState("");
-
-  // NEW: emotion state
   const [detectedEmotion, setDetectedEmotion] = useState("—");
-  const [confidence, setConfidence] = useState(0); // 0–100
+  const [confidence, setConfidence] = useState(0);
 
-  // Handle webcam on/off
-  useEffect(() => {
-    if (!isCameraOn) {
-      // turn OFF camera
-      if (videoRef.current && videoRef.current.srcObject) {
-        videoRef.current.srcObject.getTracks().forEach((t) => t.stop());
-        videoRef.current.srcObject = null;
-      }
-      return;
+  /* Emotion → overlay color */
+  function getTheme(emotion) {
+    switch (emotion) {
+      case "Happy":
+        return { stroke: "#22c55e", tint: "rgba(34,197,94,0.18)" };
+      case "Sad":
+        return { stroke: "#3b82f6", tint: "rgba(59,130,246,0.18)" };
+      case "Surprised":
+        return { stroke: "#a855f7", tint: "rgba(168,85,247,0.18)" };
+      case "Confused":
+        return { stroke: "#eab308", tint: "rgba(234,179,8,0.18)" };
+      default:
+        return { stroke: "#4a90e2", tint: "rgba(74,144,226,0.12)" };
     }
-
-    async function start() {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: true,
-        });
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-        }
-      } catch (err) {
-        console.error("Error accessing webcam:", err);
-        setError("Could not access webcam. Check browser permissions.");
-        setIsCameraOn(false);
-      }
-    }
-
-    start();
-
-    // cleanup whenever isCameraOn changes or component unmounts
-    return () => {
-      if (videoRef.current && videoRef.current.srcObject) {
-        videoRef.current.srcObject.getTracks().forEach((t) => t.stop());
-        videoRef.current.srcObject = null;
-      }
-    };
-  }, [isCameraOn]);
-
-  function handleToggleCamera() {
-    setError("");
-    setIsCameraOn((prev) => {
-      const next = !prev;
-
-      // If we are turning the camera OFF, reset emotion state
-      if (!next) {
-        setDetectedEmotion("—");
-        setConfidence(0);
-      }
-
-      return next;
-    });
   }
 
-  // NEW: mock emotion detection
-  function handleAnalyzeEmotion() {
+  function resizeCanvas() {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    if (!video || !canvas) return;
+
+    const rect = video.getBoundingClientRect();
+    canvas.width = rect.width;
+    canvas.height = rect.height;
+  }
+
+  function drawOverlay() {
+    const canvas = canvasRef.current;
+    const video = videoRef.current;
+    if (!canvas || !video) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    resizeCanvas();
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    if (!isCameraOn) return;
+
+    const theme = getTheme(detectedEmotion);
+
+    const boxW = canvas.width * 0.45;
+    const boxH = canvas.height * 0.6;
+    const x = (canvas.width - boxW) / 2;
+    const y = (canvas.height - boxH) / 2;
+
+    /* Tint */
+    ctx.fillStyle = theme.tint;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    /* Box */
+    ctx.strokeStyle = theme.stroke;
+    ctx.lineWidth = 6;
+    ctx.strokeRect(x, y, boxW, boxH);
+
+    /* Label */
+    const label =
+      detectedEmotion === "—"
+        ? "Tracking…"
+        : `${detectedEmotion} • ${confidence}%`;
+
+    ctx.font = "700 14px system-ui";
+    const textW = ctx.measureText(label).width;
+    const pillW = textW + 24;
+    const pillH = 30;
+    const pillX = x;
+    const pillY = Math.max(10, y - 40);
+
+    ctx.fillStyle = "rgba(255,255,255,0.95)";
+    ctx.beginPath();
+    ctx.roundRect(pillX, pillY, pillW, pillH, 10);
+    ctx.fill();
+
+    ctx.fillStyle = theme.stroke;
+    ctx.fillRect(pillX, pillY, 6, pillH);
+
+    ctx.fillStyle = "#111827";
+    ctx.fillText(label, pillX + 14, pillY + 20);
+
+    rafRef.current = requestAnimationFrame(drawOverlay);
+  }
+
+  function startOverlay() {
+    cancelAnimationFrame(rafRef.current);
+    rafRef.current = requestAnimationFrame(drawOverlay);
+  }
+
+  function stopOverlay() {
+    cancelAnimationFrame(rafRef.current);
+    const canvas = canvasRef.current;
+    if (canvas) canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
+  }
+
+  useEffect(() => {
     if (!isCameraOn) {
-      setError("Turn on the camera to analyze expressions.");
+      if (videoRef.current?.srcObject) {
+        videoRef.current.srcObject.getTracks().forEach((t) => t.stop());
+        videoRef.current.srcObject = null;
+      }
+      stopOverlay();
       return;
     }
 
-    // For now, this is MOCK logic. Later this is where a real model/backend goes.
-    const emotions = ["Happy", "Neutral", "Sad", "Confused", "Surprised"];
-    const randomEmotion =
-      emotions[Math.floor(Math.random() * emotions.length)];
+    navigator.mediaDevices
+      .getUserMedia({ video: true })
+      .then((stream) => {
+        videoRef.current.srcObject = stream;
+        videoRef.current.onloadedmetadata = startOverlay;
+      })
+      .catch(() => setError("Webcam access denied."));
 
-    // Confidence between 60% and 98%
-    const randomConfidence = Math.floor(60 + Math.random() * 38);
+    return stopOverlay;
+  }, [isCameraOn]);
 
-    setDetectedEmotion(randomEmotion);
-    setConfidence(randomConfidence);
-    setError("");
+  function toggleCamera() {
+    setIsCameraOn((p) => !p);
+    setDetectedEmotion("—");
+    setConfidence(0);
+  }
+
+  function analyzeEmotion() {
+    const emotions = ["Happy", "Sad", "Surprised", "Confused", "Neutral"];
+    const e = emotions[Math.floor(Math.random() * emotions.length)];
+    setDetectedEmotion(e);
+    setConfidence(Math.floor(60 + Math.random() * 35));
+    requestAnimationFrame(drawOverlay);
   }
 
   return (
     <section className="panel emotion-panel">
-      {/* HEADER */}
       <div className="panel-header">
         <h2 className="panel-title">Real-Time Emotion Detection</h2>
         <p className="panel-subtitle">
-          Use your webcam to practice recognizing facial expressions in real
-          time.
+          Live webcam feed with emotion-aware overlay.
         </p>
       </div>
 
-      {/* MAIN CONTENT */}
       <div className="panel-main">
-        {/* Webcam */}
         <div className="webcam-box">
           <video
             ref={videoRef}
@@ -104,23 +156,21 @@ function EmotionPanel() {
             className="webcam-video"
             style={{ display: isCameraOn ? "block" : "none" }}
           />
-
+          <canvas ref={canvasRef} className="webcam-overlay" />
           {!isCameraOn && (
             <span className="placeholder-text">
-              Webcam is off. Click &quot;Start Camera&quot; to begin.
+              Webcam is off. Click “Start Camera”.
             </span>
           )}
         </div>
 
         {error && <p className="error-text">{error}</p>}
 
-        {/* Emotion info */}
         <div className="emotion-info">
           <div className="emotion-row">
             <span>Detected emotion:</span>
             <strong>{detectedEmotion}</strong>
           </div>
-
           <div className="confidence-row">
             <span>Confidence:</span>
             <div className="confidence-bar">
@@ -129,26 +179,22 @@ function EmotionPanel() {
                 style={{ width: `${confidence}%` }}
               />
             </div>
-            <span className="confidence-percent">{confidence}%</span>
+            <span>{confidence}%</span>
           </div>
         </div>
       </div>
 
-      {/* FOOTER BUTTONS */}
-      <div className="panel-footer">
-        <div className="emotion-buttons">
-          <button className="button button-primary" onClick={handleToggleCamera}>
-            {isCameraOn ? "Stop Camera" : "Start Camera"}
-          </button>
-
-          <button
-            className="button button-secondary"
-            onClick={handleAnalyzeEmotion}
-            disabled={!isCameraOn}
-          >
-            Analyze Expression
-          </button>
-        </div>
+      <div className="panel-footer emotion-buttons">
+        <button className="button button-primary" onClick={toggleCamera}>
+          {isCameraOn ? "Stop Camera" : "Start Camera"}
+        </button>
+        <button
+          className="button button-secondary"
+          onClick={analyzeEmotion}
+          disabled={!isCameraOn}
+        >
+          Analyze Expression
+        </button>
       </div>
     </section>
   );
