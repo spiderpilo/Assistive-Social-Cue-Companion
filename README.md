@@ -1,10 +1,10 @@
-## 🧠 Assistive Social Cue Companion
+# 🧠 Assistive Social Cue Companion
 A tool designed to help users practice recognizing facial expressions and interpreting potential sarcasm in written messages.
 
 The Assistive Social Cue Companion is an interactive React-based application that provides real-time feedback on emotional cues. It is designed primarily to support individuals who may struggle with interpreting non-literal communication, such as sarcasm or subtle facial expressions. The goal of this project is to create a tool that can eventually be adapted for AR glasses and other accessibility platforms.
 
-## 🚀 Features
-# 🎥 Real-Time Emotion Panel
+# 🚀 Features
+## 🎥 Real-Time Emotion Panel
 
 Uses the user’s webcam to display a live video feed.
 
@@ -18,7 +18,7 @@ Organized panel layout with responsive styling.
 
 Future upgrade: integrate an actual face-emotion detection model or backend API.
 
-# 💬 Sarcasm Analyzer Panel
+## 💬 Sarcasm Analyzer Panel
 
 Users can type any message into a text box.
 
@@ -32,8 +32,8 @@ Built with clean UI sections for input, results, and actions.
 
 Future upgrade: replace mock logic with an LLM-powered sarcasm classifier.
 
-## 🛠 Tech Stack
-# Frontend
+# 🛠 Tech Stack
+## Frontend
 
 React (Vite) — component-based UI and fast dev environment
 
@@ -43,7 +43,7 @@ Webcam API — browser-based camera access
 
 State Management — React hooks (useState, useEffect, useRef)
 
-# Future Backend (planned)
+## Future Backend (planned)
 
 Node.js + Express server
 
@@ -63,7 +63,7 @@ REST API endpoints returning JSON predictions
 
 Each panel is isolated in its own component for readability, testing, and future scalability.
 
-## 🔧 Setup & Running the Project
+# 🔧 Setup & Running the Project
 1. Install dependencies
 npm install
 
@@ -76,7 +76,7 @@ The app is typically served at:
 
 http://localhost:5173
 
-## 🎯 Roadmap (What’s Coming Next)
+# 🎯 Roadmap (What’s Coming Next)
 
 🔍 Real-time facial emotion detection model (browser-based or backend)
 
@@ -90,11 +90,11 @@ http://localhost:5173
 
 🧪 Validation studies with student groups and accessibility-focused clubs
 
-## 🤝 Purpose
+# 🤝 Purpose
 
 This project aims to support individuals—especially those on the autism spectrum—who want help recognizing social cues. While currently in early development, the long-term vision is to build a practical and reliable assistive companion tool.
 
-## 📌 Status
+# 📌 Status
 
 🟦 In Development · Active Project
 Core interface is functional. Detectors currently use mock logic during early prototyping.
